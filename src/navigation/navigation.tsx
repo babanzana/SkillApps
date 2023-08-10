@@ -1,54 +1,79 @@
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createStackNavigator } from "@react-navigation/stack";
 import NavigationHomeScreen from "../features/navigation-home/navigation-home.screen";
 import NavigationMapsScreen from "../features/navigation-maps/navigation-maps.screen";
 import NavigationProfileScreen from "../features/navigation-profile/navigation-profile.screen";
-import { FontAwesome } from "@expo/vector-icons";
-import DetailProfileScreen from "../features/profile/detail-profile/screen/detail-profile.screen";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@ui-kitten/components";
+import {
+  INDIGO_1,
+  INDIGO_2,
+  INDIGO_3,
+  INDIGO_4,
+  INDIGO_5,
+} from "../components/color-databsae.component";
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
 
 const Navigation = () => {
+  const theme = useTheme();
   return (
-    // <NavigationContainer>
-      <Tab.Navigator>
-        <Tab.Screen
-          name="Home"
-          component={NavigationHomeScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="home" color={color} size={size} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="MapsStackNavigator"
-          component={NavigationMapsScreen}
-          options={{
-            // headerShown: false,
-            headerTitle: "Maps",
-            tabBarLabel: "Maps",
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="map" color={color} size={size} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={NavigationProfileScreen}
-          options={{
-            headerTitle: "Profile",
-            tabBarLabel: "Profile",
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="user" color={color} size={size} />
-            ),
-          }}
-        />
-      </Tab.Navigator>
-    // </NavigationContainer>
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Home"
+        component={NavigationHomeScreen}
+        options={{
+          headerTitle: "Home",
+          tabBarLabel: "Home",
+          tabBarActiveBackgroundColor: INDIGO_1,
+          tabBarInactiveTintColor: INDIGO_5,
+          tabBarActiveTintColor: INDIGO_4,
+          tabBarIcon: ({ size, focused }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              color={focused ? INDIGO_2 : INDIGO_3}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="MapsStackNavigator"
+        component={NavigationMapsScreen}
+        options={{
+          headerTitle: "Maps",
+          tabBarLabel: "Maps",
+          tabBarActiveBackgroundColor: INDIGO_1,
+          tabBarInactiveTintColor: INDIGO_5,
+          tabBarActiveTintColor: INDIGO_4,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "map" : "map-outline"}
+              color={focused ? INDIGO_2 : INDIGO_3}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={NavigationProfileScreen}
+        options={{
+          headerTitle: "Profile",
+          tabBarLabel: "Profile",
+          tabBarActiveBackgroundColor: INDIGO_1,
+          tabBarInactiveTintColor: INDIGO_5,
+          tabBarActiveTintColor: INDIGO_4,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle"}
+              color={focused ? INDIGO_2 : INDIGO_3}
+              size={size}
+            />
+          ),
+        }}
+      />
+    </Tab.Navigator>
   );
 };
 
