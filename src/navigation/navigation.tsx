@@ -41,6 +41,7 @@ const Navigation = () => {
         name="MapsStackNavigator"
         component={NavigationMapsScreen}
         options={{
+          headerShown:false,
           headerTitle: "Maps",
           tabBarLabel: "Maps",
           tabBarActiveBackgroundColor: INDIGO_1,
@@ -66,7 +67,7 @@ const Navigation = () => {
           tabBarActiveTintColor: INDIGO_4,
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? "person-circle" : "person-circle"}
+              name={focused ? "person-circle" : "person-circle-outline"}
               color={focused ? INDIGO_2 : INDIGO_3}
               size={size}
             />
