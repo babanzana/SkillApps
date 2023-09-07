@@ -11,6 +11,7 @@ import {
   INDIGO_3,
   INDIGO_4,
   INDIGO_5,
+  INDIGO_6,
 } from "../components/color-databsae.component";
 
 const Tab = createBottomTabNavigator();
@@ -18,14 +19,19 @@ const Tab = createBottomTabNavigator();
 const Navigation = () => {
   const theme = useTheme();
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        tabBarStyle: { backgroundColor: INDIGO_1 },
+      }}
+    >
       <Tab.Screen
         name="Home"
         component={NavigationHomeScreen}
         options={{
+          headerShown: false,
           headerTitle: "Home",
           tabBarLabel: "Home",
-          tabBarActiveBackgroundColor: INDIGO_1,
+          tabBarActiveBackgroundColor: INDIGO_6,
           tabBarInactiveTintColor: INDIGO_5,
           tabBarActiveTintColor: INDIGO_4,
           tabBarIcon: ({ size, focused }) => (
@@ -41,10 +47,10 @@ const Navigation = () => {
         name="MapsStackNavigator"
         component={NavigationMapsScreen}
         options={{
-          headerShown:false,
+          headerShown: false,
           headerTitle: "Maps",
           tabBarLabel: "Maps",
-          tabBarActiveBackgroundColor: INDIGO_1,
+          tabBarActiveBackgroundColor: INDIGO_6,
           tabBarInactiveTintColor: INDIGO_5,
           tabBarActiveTintColor: INDIGO_4,
           tabBarIcon: ({ color, size, focused }) => (
@@ -60,9 +66,12 @@ const Navigation = () => {
         name="Profile"
         component={NavigationProfileScreen}
         options={{
+          headerStyle: {
+            backgroundColor: INDIGO_1,
+          },
           headerTitle: "Profile",
           tabBarLabel: "Profile",
-          tabBarActiveBackgroundColor: INDIGO_1,
+          tabBarActiveBackgroundColor: INDIGO_6,
           tabBarInactiveTintColor: INDIGO_5,
           tabBarActiveTintColor: INDIGO_4,
           tabBarIcon: ({ color, size, focused }) => (

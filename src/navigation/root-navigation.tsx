@@ -9,12 +9,12 @@ const Stack = createStackNavigator();
 
 const RooteStackNavigator = () => {
   return (
-    <NavigationContainer>
+    // <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Navigation" component={Navigation} />
         <Stack.Screen name="DetailProfile" component={DetailProfileScreen} />
       </Stack.Navigator>
-    </NavigationContainer>
+    // </NavigationContainer>
   );
 };
 
