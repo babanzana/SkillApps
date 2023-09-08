@@ -1,15 +1,58 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
-import { Keyboard, StyleSheet, TouchableWithoutFeedback } from "react-native";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  useEffect,
+} from "react";
+import {
+  Keyboard,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { ThemedSafeAreaView } from "../../../../components/ThemedSafeAreaView.component";
 import { Input, Layout, Text, Button, Icon } from "@ui-kitten/components";
-import { INDIGO_1 } from "../../../../components/color-databsae.component";
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
+import {
+  INDIGO_1,
+  INDIGO_2,
+  INDIGO_6,
+} from "../../../../components/color-databsae.component";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import LottieView from "lottie-react-native";
+import { lotties } from "../../../../assets-data/lotties/index.lotties";
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isDisabled, setIsDisabled] = useState(true);
+  const [isDisabled, setIsDisabled] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const sheetRef = useRef<BottomSheet>(null);
+
+  const snapPoints = useMemo(() => ["55%"], []);
+  const handleClosePress = useCallback(() => {
+    sheetRef.current?.close();
+  }, []);
+
+  useEffect(() => {
+    setIsDisabled(username.length === 0);
+    setIsDisabled(password.length === 0);
+  }, []);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior={"none"}
+      />
+    ),
+    []
+  );
 
   const toggleSecureEntry = () => {
     setSecureTextEntry(!secureTextEntry);
@@ -25,7 +68,8 @@ const LoginScreen = ({ navigation }: any) => {
     if (username === "") {
       return (
         <Text category="label" status="danger">
-          Isi Username Anda
+          {/* Bagian category dan status tidak berfungsi, cari tau kenapa */}
+          Enter Your Username
         </Text>
       );
     }
@@ -36,7 +80,8 @@ const LoginScreen = ({ navigation }: any) => {
     if (password === "") {
       return (
         <Text category="label" status="danger">
-          Isi Password Anda
+          {/* Bagian category dan status tidak berfungsi, cari tau kenapa */}
+          Enter Your Password
         </Text>
       );
     }
@@ -49,8 +94,8 @@ const LoginScreen = ({ navigation }: any) => {
       setPassword("");
       navigation.navigate("RootNavigation");
     } else {
-    sheetRef.current?.expand();
-    Keyboard.dismiss();
+      sheetRef.current?.expand();
+      Keyboard.dismiss();
     }
   };
 
@@ -64,27 +109,24 @@ const LoginScreen = ({ navigation }: any) => {
     setIsDisabled(passwordText.length === 0);
   };
 
-  //========
-  const sheetRef = useRef<BottomSheet>(null);
+  const handleNavigateRegister = () => {
+    console.log("Navigate to Register Screen");
+    navigation.navigate("Register");
+  };
 
-  // variables
-  const snapPoints = useMemo(() => ["35%"], []);
-  const handleClosePress = useCallback(() => {
-    sheetRef.current?.close();
-  }, []);
-
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        pressBehavior={"none"}
-      />
-    ),
-    []
-  );
-  //========
+  const registerInformation = () => {
+    return (
+      <TouchableOpacity onPress={handleNavigateRegister}>
+        <Text
+          category="label"
+          status="success"
+          style={{ textDecorationLine: "underline" }}
+        >
+          Register Here...
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ThemedSafeAreaView style={styles.container}>
@@ -120,9 +162,22 @@ const LoginScreen = ({ navigation }: any) => {
           Login
         </Button>
       </Layout>
+      <Layout
+        style={{
+          backgroundColor: INDIGO_1,
+        }}
+      >
+        <Text
+          category="label"
+          status="info"
+          style={{ top: 5, justifyContent: "center", alignItems: "center" }}
+        >
+          Don't have an account? {registerInformation()}
+        </Text>
+      </Layout>
       <BottomSheet
         ref={sheetRef}
-        index={0}
+        index={-1}
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         bottomInset={46}
@@ -130,12 +185,20 @@ const LoginScreen = ({ navigation }: any) => {
         enablePanDownToClose={false}
         enableContentPanningGesture={false}
         style={styles.sheetContainer}
+        backgroundStyle={{ backgroundColor: INDIGO_6 }}
       >
         <BottomSheetView style={styles.contentContainer}>
           <Layout
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: INDIGO_6,
+            }}
           >
             <Text
+              status="danger"
+              category="h6"
               style={{
                 width: "80%",
                 textAlign: "center",
@@ -143,8 +206,16 @@ const LoginScreen = ({ navigation }: any) => {
                 position: "absolute",
               }}
             >
-              Login Anda Gagal Pastikan Password Anda Benar
+              Login Unsuccessful, Please Verify Your Credentials Again
             </Text>
+            <LottieView
+              source={lotties.failureLogin}
+              key="animation"
+              autoPlay
+              loop
+              resizeMode="contain"
+              style={{ height: 250, width: 250 }}
+            />
             <Button
               style={{
                 width: "80%",

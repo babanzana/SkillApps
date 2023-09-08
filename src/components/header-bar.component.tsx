@@ -5,6 +5,7 @@ import {
   Divider,
 } from "@ui-kitten/components";
 import { BackIcon } from "../assets-data/icons";
+import { INDIGO_1 } from "./color-databsae.component";
 
 export const HeaderBar = (props: any) => {
   const { title, handleGoBack } = props;
@@ -18,7 +19,7 @@ export const HeaderBar = (props: any) => {
         title={title}
         accessoryLeft={renderBackAction}
         style={{
-          backgroundColor: theme["background-basic-color-4"],
+          backgroundColor: INDIGO_1,
         }}
       />
 
