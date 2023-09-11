@@ -23,11 +23,11 @@
 //=================================================================================
 //=================================================================================
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MapView, { Callout, Marker } from "react-native-maps";
 // import { defaultAddress, dummyMarkers } from "../utils/address.utils";
 import { Input, Layout, Text } from "@ui-kitten/components";
-import { StyleSheet } from "react-native";
+import { Alert, Linking, StyleSheet, AppState } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 // import { INDIGO_2 } from "../../components/color-databsae.component";
 import * as Location from "expo-location";
@@ -36,19 +36,26 @@ import { defaultAddress } from "../../../utils/address.utils";
 import * as TaskManager from "expo-task-manager";
 import { LocationEventEmitter } from "expo-location/build/LocationEventEmitter";
 
-// Nama tugas latar belakang Anda
-const YOUR_TASK_NAME = 'background-location-task';
+// Nama tugas latar belakang
+const YOUR_TASK_NAME = "background-location-task";
 
-// Fungsi yang akan dipanggil ketika menerima pembaruan lokasi
-TaskManager.defineTask(YOUR_TASK_NAME, ({ data: { locations }, error }) => {
- if (error) {
-   console.log('Terjadi kesalahan:', error.message);
-   return;
- }
- console.log("Menerima lokasi baru", locations);
-});
+// TaskManager.defineTask(
+//   YOUR_TASK_NAME,
+//   ({ data: { locations }, error }: any) => {
+//     if (error) {
+//       console.log("Terjadi kesalahan:", error.message);
+//       return;
+//     }
+//     // console.log("Menerima lokasi baru", locations);
+//     const location = locations[0];
+//     // console.log(`"latitude": ${location.coords.latitude},`);
+//     // console.log(`"longitude": ${location.coords.longitude},`);
+//   }
+// );
 
 const NavigationMapsScreen = () => {
+  const appState = useRef(AppState.currentState);
+  const [appStateVisible, setAppStateVisible] = useState(appState.current);
   const intialRegion = { defaultAddress };
   const MapIcon = () => <Ionicons name={"map"} color={INDIGO_2} size={25} />;
 
@@ -63,12 +70,51 @@ const NavigationMapsScreen = () => {
   const [locationBackground, setLocationBackground] = useState(initialRegion);
   const [errorMsg, setErrorMsg] = useState("");
 
+  TaskManager.defineTask(
+    YOUR_TASK_NAME,
+    ({ data: { locations }, error }: any) => {
+      if (error) {
+        console.log("Terjadi kesalahan:", error.message);
+        return;
+      }
+      // console.log("Menerima lokasi baru", locations);
+      const location = locations[0];
+      // console.log(`"latitude": ${location.coords.latitude},`);
+      // console.log(`"longitude": ${location.coords.longitude},`);
+      const newStateUpdate = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+      setLocation(newStateUpdate);
+    }
+  );
+
+  const handleOpenSettings = () => {
+    Alert.alert(
+      "Izin akses geolokasi ditolak",
+      "Mohon nyalakan lokasi pada ponsel Anda untuk menggunakan fitur ini.",
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            Linking.openSettings();
+          },
+        },
+      ]
+    );
+  };
+
   const requestLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status === "granted") {
-      console.log("Izin lokasi diberikan.");
+      // console.log("Izin lokasi diberikan.");
+      startBackgroundTask();
     } else {
-      console.log("Izin lokasi ditolak.");
+      //Disini diberikan onPress buka settings.
+      handleOpenSettings();
+      // console.log("Izin lokasi ditolak.");
     }
   };
 
@@ -76,75 +122,107 @@ const NavigationMapsScreen = () => {
   const startBackgroundTask = async () => {
     await Location.startLocationUpdatesAsync(YOUR_TASK_NAME, {
       accuracy: Location.Accuracy.Balanced,
-      timeInterval: 1000, // Interval waktu (ms) untuk menerima pembaruan lokasi
+      timeInterval: 1000,
       showsBackgroundLocationIndicator: true,
     });
-    console.log("Tugas latar belakang telah dimulai.");
+    // console.log("Tugas latar belakang telah dimulai.");
   };
 
-  // Komponen efek samping untuk meminta izin dan memulai tugas latar belakang saat komponen pertama kali dimuat
   useEffect(() => {
     requestLocationPermission();
-    startBackgroundTask();
   }, []);
 
   useEffect(() => {
-
-    const handleLocationChangeBackground = (location: any) => {
-      console.log("Posisi baru handleLocationChangeBackground:", location);
-    };
-
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      let { status: status2 } =
-        await Location.requestBackgroundPermissionsAsync();
-      console.log(
-        "🚀 ~ file: detail-profile.screen.tsx:56 ~ status2:",
-        status2
-      );
-      console.log("🚀 ~ file: navigation-maps.screen.tsx:92 ~ status:", status);
-      if (status !== "granted") {
-        setErrorMsg("Permission to access location was denied");
-        return;
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        console.log("App has come to the Foreground!");
+        requestLocationPermission();
+      } else {
+        console.log("App Background!");
       }
 
-      let location = await Location.getCurrentPositionAsync({});
-      const newRegion = {
+      appState.current = nextAppState;
+      setAppStateVisible(appState.current);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // useEffect(() => {
+  //   (async () => {
+  //     const handleLocationChange = (location: any) => {
+  //       const newStateUpdate = {
+  //         latitude: location.coords.latitude,
+  //         longitude: location.coords.longitude,
+  //         latitudeDelta: 0.005,
+  //         longitudeDelta: 0.005,
+  //       };
+  //       setLocation(newStateUpdate);
+  //       console.log("Lokasi yang baru diterima:", newStateUpdate);
+  //     };
+
+  //     //Disini bingung kenapa tidak update setiap 5 detik sekali, jadi ditambahkan setTimeout
+  //     const locationSubscription = await Location.watchPositionAsync(
+  //       {
+  //         accuracy: Location.Accuracy.Balanced,
+  //         timeInterval: 5000,
+  //       },
+  //       handleLocationChange
+  //     );
+  //     console.log("🚀 ~ file: detail-profile.screen.tsx:156 ~ locationSubscription:", locationSubscription)
+
+  //     return () => {
+  //       locationSubscription.remove();
+  //     };
+  //   })();
+  // }, []);
+
+  useEffect(() => {
+    const handleLocationChange = (location: any) => {
+      const newStateUpdate = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         latitudeDelta: 0.005,
         longitudeDelta: 0.005,
       };
-      setLocation(newRegion);
+      setLocation(newStateUpdate);
+      console.log("Lokasi yang baru diterima:", newStateUpdate);
+    };
 
-      const handleLocationChange = (location: any) => {
-        const newStateUpdate = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        };
-        setLocationBackground(newStateUpdate);
-        console.log("Posisi baru handleLocationChange:", newStateUpdate);
-      };
+    let locationSubscription: any = null;
 
-      const locationSubscription = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.Balanced, timeInterval: 1000 },
+    const startLocationUpdates = async () => {
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation,
+          distanceInterval: 10,
+          timeInterval: 5000,
+        },
         handleLocationChange
       );
+    };
 
-      return () => {
+    startLocationUpdates(); // Memulai pemantauan lokasi pertama kali
+
+    const intervalId = setInterval(() => {
+      if (locationSubscription) {
+        locationSubscription.remove(); // Hentikan langganan saat ini jika ada
+      }
+      startLocationUpdates(); // Memulai pemantauan lokasi yang baru
+    }, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+      if (locationSubscription) {
         locationSubscription.remove();
-      };
-    })();
+      }
+    };
   }, []);
-
-  let text = "Waiting..";
-  if (errorMsg) {
-    text = errorMsg;
-  } else if (location) {
-    text = JSON.stringify(location);
-  }
 
   return (
     <Layout style={styles.container}>
@@ -158,15 +236,8 @@ const NavigationMapsScreen = () => {
             latitude: location.latitude,
             longitude: location.longitude,
           }}
-        ></Marker>
+        />
       </MapView>
-      <Input
-        accessoryLeft={MapIcon}
-        placeholder="Silahkan Lakukan Pencarian"
-        status="info"
-        size="medium"
-        style={styles.inputContainer}
-      />
     </Layout>
   );
 };
