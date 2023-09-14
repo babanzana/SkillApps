@@ -13,9 +13,10 @@ const AuthenticationNavigation = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="RootNavigation" component={RooteStackNavigator} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="RootNavigation" component={RooteStackNavigator}/>
+        {/* <Stack.Screen name="RootNavigation" component={RooteStackNavigator} /> */}
         {/* /Disini Menggunakan Screen Register atau Login, udh itu baru di arahkan masuk ke root-navigation */}
       </Stack.Navigator>
     </NavigationContainer>
