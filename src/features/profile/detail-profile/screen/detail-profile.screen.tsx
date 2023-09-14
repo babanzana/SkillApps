@@ -67,6 +67,10 @@ const NavigationMapsScreen = () => {
   };
 
   const [location, setLocation] = useState(initialRegion);
+  console.log(
+    "🚀 ~ file: detail-profile.screen.tsx:70 ~ NavigationMapsScreen ~ location:",
+    location
+  );
   const [locationBackground, setLocationBackground] = useState(initialRegion);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -110,7 +114,7 @@ const NavigationMapsScreen = () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status === "granted") {
       // console.log("Izin lokasi diberikan.");
-      startBackgroundTask();
+      // startBackgroundTask();
     } else {
       //Disini diberikan onPress buka settings.
       handleOpenSettings();
@@ -139,9 +143,10 @@ const NavigationMapsScreen = () => {
         nextAppState === "active"
       ) {
         console.log("App has come to the Foreground!");
-        requestLocationPermission();
+        // requestLocationPermission();
       } else {
         console.log("App Background!");
+        startBackgroundTask();
       }
 
       appState.current = nextAppState;
@@ -182,47 +187,47 @@ const NavigationMapsScreen = () => {
   //   })();
   // }, []);
 
-  useEffect(() => {
-    const handleLocationChange = (location: any) => {
-      const newStateUpdate = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      };
-      setLocation(newStateUpdate);
-      console.log("Lokasi yang baru diterima:", newStateUpdate);
-    };
+  // useEffect(() => {
+  //   const handleLocationChange = (location: any) => {
+  //     const newStateUpdate = {
+  //       latitude: location.coords.latitude,
+  //       longitude: location.coords.longitude,
+  //       latitudeDelta: 0.005,
+  //       longitudeDelta: 0.005,
+  //     };
+  //     setLocation(newStateUpdate);
+  //     // console.log("Lokasi yang baru diterima:", newStateUpdate);
+  //   };
 
-    let locationSubscription: any = null;
+  //   let locationSubscription: any = null;
 
-    const startLocationUpdates = async () => {
-      locationSubscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          distanceInterval: 10,
-          timeInterval: 5000,
-        },
-        handleLocationChange
-      );
-    };
+  //   const startLocationUpdates = async () => {
+  //     locationSubscription = await Location.watchPositionAsync(
+  //       {
+  //         accuracy: Location.Accuracy.BestForNavigation,
+  //         distanceInterval: 10,
+  //         timeInterval: 5000,
+  //       },
+  //       handleLocationChange
+  //     );
+  //   };
 
-    startLocationUpdates(); // Memulai pemantauan lokasi pertama kali
+  //   startLocationUpdates(); // Memulai pemantauan lokasi pertama kali
 
-    const intervalId = setInterval(() => {
-      if (locationSubscription) {
-        locationSubscription.remove(); // Hentikan langganan saat ini jika ada
-      }
-      startLocationUpdates(); // Memulai pemantauan lokasi yang baru
-    }, 5000);
+  //   const intervalId = setInterval(() => {
+  //     if (locationSubscription) {
+  //       locationSubscription.remove(); // Hentikan langganan saat ini jika ada
+  //     }
+  //     startLocationUpdates(); // Memulai pemantauan lokasi yang baru
+  //   }, 5000);
 
-    return () => {
-      clearInterval(intervalId);
-      if (locationSubscription) {
-        locationSubscription.remove();
-      }
-    };
-  }, []);
+  //   return () => {
+  //     clearInterval(intervalId);
+  //     if (locationSubscription) {
+  //       locationSubscription.remove();
+  //     }
+  //   };
+  // }, []);
 
   return (
     <Layout style={styles.container}>
@@ -255,3 +260,98 @@ const styles = StyleSheet.create({
 });
 
 export default NavigationMapsScreen;
+
+//===============================
+
+// import React, { useEffect, useState } from "react";
+// import { View, Text, Button, AppState } from "react-native";
+// import * as Location from "expo-location";
+// import * as Permissions from "expo-permissions";
+// import * as TaskManager from "expo-task-manager";
+
+// const LOCATION_TASK_NAME = "background-location-task";
+
+// TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+//   if (error) {
+//     console.error(error);
+//     return;
+//   }
+//   if (data) {
+//     const { locations } = data;
+//     console.log("Lokasi yang diperbarui:", locations);
+//     // Lakukan sesuatu dengan data lokasi yang diperbarui di sini
+//   }
+// });
+
+// export default function App() {
+//   const [locationUpdatesEnabled, setLocationUpdatesEnabled] = useState(false);
+
+//   useEffect(() => {
+//     async function checkLocationPermission() {
+//       const { status } = await Permissions.askAsync(Permissions.LOCATION);
+//       if (status !== "granted") {
+//         console.log("Izin lokasi tidak diberikan");
+//       }
+//     }
+
+//     checkLocationPermission();
+//   }, []);
+
+//   useEffect(() => {
+//     const handleAppStateChange = async (nextAppState) => {
+//       if (nextAppState === "background") {
+//         console.log(
+//           "Aplikasi berada di latar belakang. Memulai pemantauan lokasi..."
+//         );
+//         await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+//           accuracy: Location.Accuracy.Balanced,
+//           timeInterval: 60000, // Interval pembaruan dalam milidetik (contoh: 60 detik)
+//           distanceInterval: 100, // Jarak minimal (dalam meter) antara pembaruan lokasi
+//         });
+//         setLocationUpdatesEnabled(true);
+//       } else if (nextAppState === "active") {
+//         console.log(
+//           "Aplikasi berada di foreground. Menghentikan pemantauan lokasi..."
+//         );
+//         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+//         setLocationUpdatesEnabled(false);
+//       }
+//     };
+
+//     // Langganan perubahan AppState
+//     AppState.addEventListener("change", handleAppStateChange);
+
+//     return () => {
+//       // Hapus langganan saat komponen dibongkar
+//       AppState.removeEventListener("change", handleAppStateChange as any);
+//     };
+//   }, []);
+
+//   const startLocationUpdates = async () => {
+//     // Dijalankan saat pengguna mengeklik tombol "Mulai Pemantauan Lokasi"
+//   };
+
+//   const stopLocationUpdates = async () => {
+//     // Dijalankan saat pengguna mengeklik tombol "Hentikan Pemantauan Lokasi"
+//   };
+
+//   return (
+//     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+//       <Text>
+//         Status Pemantauan Lokasi:{" "}
+//         {locationUpdatesEnabled ? "Aktif" : "Tidak Aktif"}
+//       </Text>
+//       {locationUpdatesEnabled ? (
+//         <Button
+//           title="Hentikan Pemantauan Lokasi"
+//           onPress={stopLocationUpdates}
+//         />
+//       ) : (
+//         <Button
+//           title="Mulai Pemantauan Lokasi"
+//           onPress={startLocationUpdates}
+//         />
+//       )}
+//     </View>
+//   );
+// }
