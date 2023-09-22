@@ -45,6 +45,8 @@ import { useState, useEffect, useRef } from "react";
 import { Text, View, Button, Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import { isLocationEnabled } from "react-native-android-location-enabler";
+import * as Location from "expo-location";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -60,7 +62,30 @@ export default function App() {
   const notificationListener = useRef();
   const responseListener = useRef();
 
+  // const [enabled, setEnabled] = useState(false);
+  // console.log("🚀 ~ file: App.tsx:65 ~ App ~ enabled:", enabled);
+
+  // const checkLocationStatus = async () => {
+  //   const { locationServicesEnabled } = await Location.hasServicesEnabledAsync();
+  //   console.log("🚀 ~ file: App.tsx:70 ~ checkLocationStatus ~ valueOf:", valueOf)
+  //   if (valueOf) {
+  //     console.log("Layanan lokasi aktif.");
+  //   } else {
+  //     console.log("Layanan lokasi tidak aktif.");
+  //   }
+  // };
+
+  const checkLocationStatus = async () => {
+    const result = await Location.hasServicesEnabledAsync();
+    if (result) {
+      console.log("Layanan lokasi aktif.");
+    } else {
+      console.log("Layanan lokasi tidak aktif.");
+    }
+  };
+
   useEffect(() => {
+    checkLocationStatus();
     registerForPushNotificationsAsync().then((token) =>
       setExpoPushToken(token)
     );

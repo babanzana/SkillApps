@@ -35,6 +35,7 @@ import { INDIGO_2 } from "../../../../components/color-databsae.component";
 import { defaultAddress } from "../../../utils/address.utils";
 import * as TaskManager from "expo-task-manager";
 import { LocationEventEmitter } from "expo-location/build/LocationEventEmitter";
+// import * as TaskManager from "expo-task-manager";
 
 // Nama tugas latar belakang
 const YOUR_TASK_NAME = "background-location-task";
