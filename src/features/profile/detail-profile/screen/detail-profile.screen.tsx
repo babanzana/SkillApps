@@ -84,8 +84,6 @@ const NavigationMapsScreen = () => {
       }
       // console.log("Menerima lokasi baru", locations);
       const location = locations[0];
-      // console.log(`"latitude": ${location.coords.latitude},`);
-      // console.log(`"longitude": ${location.coords.longitude},`);
       const newStateUpdate = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
