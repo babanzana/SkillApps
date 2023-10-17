@@ -25,202 +25,229 @@
 //     requestNotificationPermission();
 //   }, []);
 //   return (
-//     // <>
-//     //   <IconRegistry icons={EvaIconsPack} />
-//     //   <ApplicationProvider mapping={evaMapping} theme={{ ...evaTheme }}>
-//     //     <PaperProvider>
-//     //       {/* <RooteStackNavigator /> */}
-//     //       <AuthenticationNavigation />
-//     //     </PaperProvider>
-//     //   </ApplicationProvider>
-//     // </>
+//     <>
+//       <IconRegistry icons={EvaIconsPack} />
+//       <ApplicationProvider mapping={evaMapping} theme={{ ...evaTheme }}>
+//         <PaperProvider>
+//           {/* <RooteStackNavigator /> */}
+//           <AuthenticationNavigation />
+//         </PaperProvider>
+//       </ApplicationProvider>
+//     </>
 
-//     <View>
-//       <Text>asdf</Text>
-//     </View>
+//     // <View>
+//     //   <Text>asdf</Text>
+//     // </View>
 //   );
 // }
 
-import { useState, useEffect, useRef } from "react";
-import { Text, View, Button, Platform } from "react-native";
-import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
+// import React, { useRef } from "react";
+// import { StyleSheet, View } from "react-native";
+// import UserLocation from "./UserLocation";
+// import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
+// import { HandleLocationPermissionComponent } from "./handle-location-permission";
+// import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
+// export default function App() {
+//   return (
+//     <View style={styles.container}>
+//       <GestureHandlerRootView>
+//         <UserLocation />
+//       </GestureHandlerRootView>
+//     </View>
+//   );
+// }
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#fff",
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+// });
+
+// Location Background tuh yang ini
+
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, View, Button } from "react-native";
+import * as TaskManager from "expo-task-manager";
+import * as Location from "expo-location";
+
+const LOCATION_TASK_NAME = "LOCATION_TASK_NAME";
+let foregroundSubscription: { remove: any } | null = null;
+
+// define background untuk trackingnya
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  if (data) {
+    const { locations }: any = data;
+    const location = locations[0];
+    if (location) {
+      // console.log("Location in Background", location.coords);
+
+      const { locations }: any = data;
+      let lat = locations[0].coords.latitude;
+      let long = locations[0].coords.longitude;
+
+      console.log(`${new Date(Date.now()).toLocaleString()}: ${lat}, ${long}`);
+    }
+  }
 });
 
 export default function App() {
-  const [expoPushToken, setExpoPushToken] = useState("");
-  const [notification, setNotification] = useState(false);
-  const notificationListener = useRef();
-  const responseListener = useRef();
+  const positionPoint = {
+    latitude: 0,
+    longitude: 0,
+  };
+  const [position, setPosition] = useState(positionPoint);
 
+  // Request permissions
   useEffect(() => {
-    registerForPushNotificationsAsync().then((token) =>
-      setExpoPushToken(token)
-    );
-
-    notificationListener.current =
-      Notifications.addNotificationReceivedListener((notification) => {
-        setNotification(notification);
-      });
-
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("Ini Response: ", response);
-      });
-
-    return () => {
-      Notifications.removeNotificationSubscription(
-        notificationListener.current
-      );
-      Notifications.removeNotificationSubscription(responseListener.current);
+    const requestPermissions = async () => {
+      const foreground = await Location.requestForegroundPermissionsAsync();
+      // Jika Foregroundnya Granted langsung cek Background
+      if (foreground.granted)
+        await Location.requestBackgroundPermissionsAsync();
     };
+    requestPermissions();
   }, []);
 
+  // Start location tracking untuk foreground
+  const startForegroundUpdate = async () => {
+    // Check if foreground permissionnya granted tidak
+    const { granted } = await Location.getForegroundPermissionsAsync();
+    if (!granted) {
+      console.log("location tracking denied");
+      return;
+    }
+
+    // Memastikan bahwa foreground sebelumnya berjalan atau tidak
+    foregroundSubscription?.remove();
+
+    // Start watching position ini untuk Foreground menggunakan watchPoisitonAsync
+    foregroundSubscription = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 5000,
+        distanceInterval: 0,
+      },
+      (location) => {
+        // Disini ketika sudah mendapatkan lokasi apa yang mau dilakukan
+        setPosition(location.coords);
+      }
+    );
+  };
+
+  // Stop tracking untuk foreground
+  const stopForegroundUpdate = () => {
+    foregroundSubscription?.remove();
+    const positionReset = positionPoint;
+    setPosition(positionReset);
+  };
+
+  // Start location tracking untuk background
+  const startBackgroundUpdate = async () => {
+    // Check if background permissionnya granted tidak
+    const { granted } = await Location.getBackgroundPermissionsAsync();
+    if (!granted) {
+      console.log("location tracking denied");
+      return;
+    }
+
+    // Memastikan task nya itu define atau tidak
+    const isTaskDefined = TaskManager.isTaskDefined(LOCATION_TASK_NAME);
+    if (!isTaskDefined) {
+      console.log("Task is not defined");
+      return;
+    }
+
+    // Memastikan background Location tracking sebelumnya berjalan atau tidak, jika sedang berjalan return saja.
+    const hasStarted = await Location.hasStartedLocationUpdatesAsync(
+      LOCATION_TASK_NAME
+    );
+    if (hasStarted) {
+      console.log("Already started");
+      return;
+    }
+
+    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+      accuracy: Location.Accuracy.BestForNavigation,
+      timeInterval: 5000,
+      distanceInterval: 0,
+      // Make sure to enable this notification if you want to consistently track in the background
+      showsBackgroundLocationIndicator: true, // ?? Ky nya ini tidak berfungsi
+      foregroundService: {
+        notificationTitle: "Location",
+        notificationBody: "Location tracking in background",
+        notificationColor: "#fff",
+      },
+    });
+  };
+
+  // Stop location tracking untuk background
+  const stopBackgroundUpdate = async () => {
+    const hasStarted = await Location.hasStartedLocationUpdatesAsync(
+      LOCATION_TASK_NAME
+    );
+    if (hasStarted) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      console.log("Location tacking stopped");
+    }
+  };
+
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "space-around",
-      }}
-    >
-      <Text>Your expo push token: {expoPushToken}</Text>
-      <View style={{ alignItems: "center", justifyContent: "center" }}>
-        <Text>
-          Title: {notification && notification.request.content.title}{" "}
-        </Text>
-        <Text>Body: {notification && notification.request.content.body}</Text>
-        <Text>
-          Data:{" "}
-          {notification && JSON.stringify(notification.request.content.data)}
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <Text>Foreground Latitude: {position?.latitude}</Text>
+      <Text>Foreground Longitude: {position?.longitude}</Text>
+      <View style={styles.separator} />
       <Button
-        title="Press to schedule a notification"
-        onPress={async () => {
-          await schedulePushNotification();
-        }}
+        onPress={startForegroundUpdate}
+        title="Start in foreground"
+        color="green"
       />
+      <View style={styles.separator} />
       <Button
-        title="Press Notif 1"
-        onPress={async () => {
-          await sendNotification1();
-        }}
+        onPress={stopForegroundUpdate}
+        title="Stop in foreground"
+        color="red"
       />
+      <View style={styles.separator} />
       <Button
-        title="Press Notif 2"
-        onPress={async () => {
-          await sendNotification2();
-        }}
+        onPress={startBackgroundUpdate}
+        title="Start in background"
+        color="green"
       />
+      <View style={styles.separator} />
       <Button
-        title="Press Notif 3"
-        onPress={async () => {
-          await sendNotification3();
-        }}
+        onPress={stopBackgroundUpdate}
+        title="Stop in foreground"
+        color="red"
       />
     </View>
   );
 }
 
-async function schedulePushNotification() {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "You've got mail! 📬",
-      body: "Here is the notification body",
-      data: { data: "goes here" },
-    },
-    trigger: { seconds: 2 },
-  });
-}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  switchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  button: {
+    marginTop: 15,
+  },
+  separator: {
+    marginVertical: 8,
+  },
+});
 
-const JAM = 21;
-const MINUTE = 22;
-// Fungsi untuk mengirim notifikasi
-const sendNotification1 = async () => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Judul Notifikasi1",
-      body: "Isi pesan notifikasi di sini",
-    },
-    trigger: {
-      hour: JAM,
-      minute: MINUTE,
-      repeats: true,
-    },
-  });
-};
+// Percobaan untuk Notifications
 
-const sendNotification2 = async () => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Judul Notifikasi2",
-      body: "Isi pesan notifikasi di sini",
-    },
-    trigger: {
-      hour: JAM,
-      minute: MINUTE,
-      repeats: true,
-    },
-  });
-};
-
-const sendNotification3 = async () => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Judul Notifikasi3",
-      body: "Isi pesan notifikasi di sini",
-    },
-    trigger: {
-      hour: JAM,
-      minute: MINUTE,
-      repeats: true,
-    },
-  });
-};
-
-async function registerForPushNotificationsAsync() {
-  let token;
-
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
-  }
-
-  if (Device.isDevice) {
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-      alert("Failed to get push token for push notification!");
-      return;
-    }
-    // Learn more about projectId:
-    // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
-    token = (
-      await Notifications.getExpoPushTokenAsync({
-        projectId: "your-project-id",
-      })
-    ).data;
-    console.log("Ini token: ", token);
-  } else {
-    alert("Must use physical device for Push Notifications");
-  }
-
-  return token;
-}
